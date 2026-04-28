@@ -20,9 +20,18 @@ Dataset images not found, missing path ...\prepared_datasets\nuvoton_people_v1\v
 
 Fix: pass an absolute `--data` path:
 
+Windows PowerShell:
+
 ```powershell
-$repo = "C:\Users\Harsha Krishnaswamy\Desktop\Development\Nuvoton_Model"
+$repo = "<path-to-repo>"
 --data "$repo\prepared_datasets\nuvoton_people_v1\dataset.yaml"
+```
+
+Linux:
+
+```bash
+repo="<path-to-repo>"
+--data "$repo/prepared_datasets/nuvoton_people_v1/dataset.yaml"
 ```
 
 Avoid relying on relative `..\..\prepared_datasets\...` paths from inside `ML_YOLO/yolov8_ultralytics`.
@@ -58,26 +67,24 @@ If needed, use:
 --batch 8
 ```
 
-## PowerShell Activation Is Blocked
+## Shell Activation Issues
 
-If `.\.venv\Scripts\Activate.ps1` is blocked by execution policy, use the venv Python directly:
+If PowerShell blocks `.\.venv\Scripts\Activate.ps1`, use the venv Python directly:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe scripts\build_splits.py --dataset-root overhead-person-detection
 ```
 
-## Generated Files Show Up In Git Status
+On Linux, activate with:
 
-Most generated files are ignored, including:
+```bash
+source .venv/bin/activate
+```
 
-- `.venv/`
-- `.hf-cache/`
-- `.matplotlib/`
-- `.tmp/`
-- `.ultralytics/`
-- `prepared_datasets/`
-- `runs/`
-- model weights and exported model files
+Or use the venv Python directly:
 
-If `git status --short` shows only ignored files via `git status --ignored --short`, there is usually nothing to commit.
+```bash
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python scripts/build_splits.py --dataset-root overhead-person-detection
+```

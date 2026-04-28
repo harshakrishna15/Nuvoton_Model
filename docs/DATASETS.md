@@ -9,6 +9,8 @@ This project trains on exactly these two datasets:
 1. [bdanko/overhead-person-detection](https://huggingface.co/datasets/bdanko/overhead-person-detection)
 2. [Passenger Counter](https://universe.roboflow.com/passenger-counter-project/passenger-counter)
 
+Passenger Counter may require Roboflow project access to download. Training does not require Roboflow access after the exported files are placed locally.
+
 ## Expected Local Layout
 
 Place both datasets in the repository root with these exact folder names:
@@ -33,7 +35,9 @@ The Passenger Counter export used during development had 3,508 images and 3,508 
 
 ## Validate Dataset Placement
 
-Run these commands from the repo root:
+Run these commands from the repo root.
+
+Windows PowerShell:
 
 ```powershell
 Test-Path .\overhead-person-detection\data
@@ -44,6 +48,17 @@ Get-ChildItem '.\Passenger Counter.yolov8\train\images' -File | Measure-Object
 Get-ChildItem '.\Passenger Counter.yolov8\train\labels' -File | Measure-Object
 ```
 
+Linux:
+
+```bash
+test -d overhead-person-detection/data
+test -d "Passenger Counter.yolov8/train/images"
+test -d "Passenger Counter.yolov8/train/labels"
+find overhead-person-detection/data -name "*.parquet"
+find "Passenger Counter.yolov8/train/images" -type f | wc -l
+find "Passenger Counter.yolov8/train/labels" -type f | wc -l
+```
+
 Expected results:
 
 - the first three commands print `True`
@@ -52,16 +67,32 @@ Expected results:
 
 ## Build Splits
 
+Windows PowerShell:
+
 ```powershell
 python scripts\build_splits.py --dataset-root overhead-person-detection
+```
+
+Linux:
+
+```bash
+python scripts/build_splits.py --dataset-root overhead-person-detection
 ```
 
 This creates or refreshes `overhead-person-detection/splits.json`.
 
 ## Prepare The Merged YOLO Dataset
 
+Windows PowerShell:
+
 ```powershell
 python scripts\prepare_nuvoton_yolo_dataset.py --force
+```
+
+Linux:
+
+```bash
+python scripts/prepare_nuvoton_yolo_dataset.py --force
 ```
 
 This creates:
@@ -81,15 +112,3 @@ Preparation behavior:
 - Passenger Counter contributes to train/val only
 - labels are normalized to one class: `person`
 - overhead images are exported as grayscale PNGs
-
-## Git Policy
-
-Do not commit datasets or prepared exports:
-
-- `overhead-person-detection/`
-- `Passenger Counter.yolov8/`
-- `prepared_datasets/`
-- `runs/`
-- model weights and exported model files
-
-These are intentionally ignored in `.gitignore`.
