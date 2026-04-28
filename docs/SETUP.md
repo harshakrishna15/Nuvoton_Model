@@ -60,4 +60,5 @@ python -c "import torch; print(torch.__version__); print('cuda:', torch.cuda.is_
 
 For GPU training, the Python check should print `cuda: True` and the NVIDIA GPU name.
 
-Next: [Dataset Setup](DATASETS.md).
+
+Next: [Dataset Setup](DATASETS.md)

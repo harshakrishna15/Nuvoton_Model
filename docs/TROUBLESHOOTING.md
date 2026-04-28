@@ -68,3 +68,5 @@ Linux direct Python:
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python scripts/build_splits.py --dataset-root overhead-person-detection
 ```
+
+Back to: [README](../README.md)

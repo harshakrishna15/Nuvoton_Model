@@ -56,3 +56,5 @@ Common options:
 - `--device 0` uses the first GPU; `--device cpu` runs on CPU
 
 The YOLO evaluator writes `summary.json`, `per_image_counts.csv`, plots, and worst-case overlays.
+
+Next: [Troubleshooting](TROUBLESHOOTING.md)

@@ -9,6 +9,32 @@ The datasets are not committed to Git. Download or export them into the expected
 
 Passenger Counter may require Roboflow project access to download. Training does not require Roboflow access after the exported files are placed locally.
 
+## Download Locally
+
+Overhead Person Detection from Hugging Face:
+
+```bash
+python -m pip install huggingface-hub
+hf download bdanko/overhead-person-detection --repo-type dataset --local-dir overhead-person-detection
+```
+
+Passenger Counter from Roboflow requires project access. Programmatic download:
+
+```bash
+python -m pip install roboflow
+```
+
+```python
+from roboflow import Roboflow
+
+rf = Roboflow(api_key="<roboflow-api-key>")
+project = rf.workspace("passenger-counter-project").project("passenger-counter")
+version = project.version(1)  # change if using a different version
+version.download("yolov8", location="Passenger Counter.yolov8")
+```
+
+If you download a YOLOv8 ZIP from Roboflow manually, unzip it so the local folder is named `Passenger Counter.yolov8/` and contains `train/images` and `train/labels`.
+
 ## Expected Local Layout
 
 Place both datasets in the repository root with these exact folder names:
@@ -90,3 +116,5 @@ python scripts/prepare_nuvoton_yolo_dataset.py --force
 ```
 
 This creates `prepared_datasets/nuvoton_people_v1/` with `dataset.yaml`, `prep_summary.json`, and train/val/test folders.
+
+Next: [Training](TRAINING.md)
