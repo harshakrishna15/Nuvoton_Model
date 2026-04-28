@@ -54,17 +54,19 @@ Important notes:
 
 ### 1. Overhead Person Detection
 
-- location: `overhead-person-detection/`
-- format: parquet files under `overhead-person-detection/data/`
+- source dataset: [bdanko/overhead-person-detection](https://huggingface.co/datasets/bdanko/overhead-person-detection)
+- local location after download: `overhead-person-detection/`
+- local format: parquet files under `overhead-person-detection/data/`
 - current manifest: `overhead-person-detection/splits.json`
 - size in the included dataset card: 13,448 examples
 
-The loader in `src/elevator_counter/data.py` reads these parquet files through Hugging Face Datasets, converts images to grayscale tensors, and builds detection targets for PyTorch.
+The loader in `src/elevator_counter/data.py` reads the downloaded Hugging Face dataset snapshot through Hugging Face Datasets, converts images to grayscale tensors, and builds detection targets for PyTorch.
 
 ### 2. Passenger Counter
 
-- location: `Passenger Counter.yolov8/`
-- format: YOLO labels and images from Roboflow
+- source dataset: [Passenger Counter](https://universe.roboflow.com/passenger-counter-project/passenger-counter)
+- local location after export: `Passenger Counter.yolov8/`
+- local format: YOLO labels and images from Roboflow
 - included export note: 3,508 images
 
 During Nuvoton data prep, these labels are normalized to a single `person` class and merged with the overhead dataset.
