@@ -4,7 +4,7 @@ This repo evaluates models with count-focused metrics, not only box-level detect
 
 ## Baseline Evaluation
 
-Windows PowerShell:
+### Windows PowerShell
 
 ```powershell
 python scripts\evaluate_baseline.py `
@@ -13,7 +13,7 @@ python scripts\evaluate_baseline.py `
   --output runs\baseline_frcnn\eval_summary.json
 ```
 
-Linux:
+### Linux / WSL / macOS
 
 ```bash
 python scripts/evaluate_baseline.py \
@@ -26,7 +26,7 @@ The baseline evaluator sweeps score thresholds on validation, chooses a count-fo
 
 ## Nuvoton YOLO Evaluation
 
-Windows PowerShell:
+### Windows PowerShell
 
 ```powershell
 python scripts\evaluate_nuvoton_yolo.py `
@@ -38,7 +38,7 @@ python scripts\evaluate_nuvoton_yolo.py `
   --device 0
 ```
 
-Linux:
+### Linux / WSL / macOS
 
 ```bash
 python scripts/evaluate_nuvoton_yolo.py \

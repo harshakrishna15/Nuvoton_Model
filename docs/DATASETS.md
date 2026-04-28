@@ -33,11 +33,44 @@ Nuvoton_Model/
 
 The Passenger Counter export used during development had 3,508 images and 3,508 label files.
 
+## Downloading Datasets
+
+### bdanko/overhead-person-detection (Hugging Face)
+
+You can download via the Hugging Face CLI or programmatically:
+
+```bash
+pip install huggingface-hub
+hf download bdanko/overhead-person-detection --local-dir overhead-person-detection
+```
+
+Or with Python:
+
+```python
+from datasets import load_dataset
+ds = load_dataset("bdanko/overhead-person-detection")
+ds.save_to_disk("overhead-person-detection")
+```
+
+Then ensure the parquet is at `overhead-person-detection/data/train-00000-of-00001.parquet` (or similar).
+
+### Passenger Counter (Roboflow)
+
+Requires a Roboflow API key:
+
+```python
+from roboflow import Roboflow
+rf = Roboflow(api_key="YOUR_API_KEY")
+project = rf.workspace("passenger-counter-project").project("passenger-counter")
+version = project.version(1)
+version.download("yolov8", location="Passenger Counter.yolov8")
+```
+
 ## Validate Dataset Placement
 
-Run these commands from the repo root.
+Run these commands from the repo root:
 
-Windows PowerShell:
+### Windows PowerShell
 
 ```powershell
 Test-Path .\overhead-person-detection\data
@@ -48,32 +81,30 @@ Get-ChildItem '.\Passenger Counter.yolov8\train\images' -File | Measure-Object
 Get-ChildItem '.\Passenger Counter.yolov8\train\labels' -File | Measure-Object
 ```
 
-Linux:
+### Linux / WSL / macOS
 
 ```bash
-test -d overhead-person-detection/data
-test -d "Passenger Counter.yolov8/train/images"
-test -d "Passenger Counter.yolov8/train/labels"
-find overhead-person-detection/data -name "*.parquet"
-find "Passenger Counter.yolov8/train/images" -type f | wc -l
-find "Passenger Counter.yolov8/train/labels" -type f | wc -l
+ls overhead-person-detection/data/*.parquet
+test -d "Passenger Counter.yolov8/train/images" && echo "ok" || echo "missing"
+test -d "Passenger Counter.yolov8/train/labels" && echo "ok" || echo "missing"
+ls "Passenger Counter.yolov8/train/images" | wc -l
+ls "Passenger Counter.yolov8/train/labels" | wc -l
 ```
 
 Expected results:
 
-- the first three commands print `True`
 - the overhead dataset contains at least one parquet file under `overhead-person-detection/data/`
 - the Passenger Counter image and label counts match
 
 ## Build Splits
 
-Windows PowerShell:
+### Windows PowerShell
 
 ```powershell
 python scripts\build_splits.py --dataset-root overhead-person-detection
 ```
 
-Linux:
+### Linux / WSL / macOS
 
 ```bash
 python scripts/build_splits.py --dataset-root overhead-person-detection
@@ -83,13 +114,13 @@ This creates or refreshes `overhead-person-detection/splits.json`.
 
 ## Prepare The Merged YOLO Dataset
 
-Windows PowerShell:
+### Windows PowerShell
 
 ```powershell
 python scripts\prepare_nuvoton_yolo_dataset.py --force
 ```
 
-Linux:
+### Linux / WSL / macOS
 
 ```bash
 python scripts/prepare_nuvoton_yolo_dataset.py --force

@@ -1,6 +1,6 @@
 # Training
 
-Run commands from the repository root unless a step explicitly changes directories.
+Run all commands from the repository root unless a step explicitly changes directories.
 
 ## Nuvoton YOLO Training
 
@@ -8,9 +8,9 @@ The Nuvoton path uses the merged dataset created by `scripts/prepare_nuvoton_yol
 
 ### 1-Epoch GPU Smoke Test
 
-Use this first to verify the end-to-end training pipeline.
+Use this first to verify the end-to-end training pipeline:
 
-Windows PowerShell:
+#### Windows PowerShell
 
 ```powershell
 $repo = (Get-Location).Path
@@ -37,16 +37,18 @@ python dg_train.py `
   --name smoke_1epoch_gpu
 ```
 
-Linux:
+#### Linux / WSL / macOS
 
 ```bash
 repo="$(pwd)"
 export MPLCONFIGDIR="$repo/.matplotlib"
 export YOLO_CONFIG_DIR="$repo/.ultralytics"
-export TMPDIR="$repo/.tmp"
-mkdir -p "$MPLCONFIGDIR" "$YOLO_CONFIG_DIR" "$TMPDIR"
+export TEMP=/tmp/nuvoton_model
+export TMP=/tmp/nuvoton_model
+export TMPDIR=/tmp/nuvoton_model
+mkdir -p /tmp/nuvoton_model
 
-cd ./ML_YOLO/yolov8_ultralytics
+cd ML_YOLO/yolov8_ultralytics
 
 python dg_train.py \
   --model-cfg ultralytics/cfg/models/v8/relu6-yolov8.yaml \
@@ -62,13 +64,6 @@ python dg_train.py \
   --name smoke_1epoch_gpu
 ```
 
-Expected successful smoke-test signs:
-
-- log shows `CUDA:0` with the NVIDIA GPU name
-- AMP checks pass
-- train and val label caches are created
-- epoch finishes and checkpoints are saved
-
 Expected output directory:
 
 ```text
@@ -80,7 +75,9 @@ runs/nuvoton_yolo/smoke_1epoch_gpu/
 
 ### Full Training Run
 
-PowerShell:
+For a longer run, keep the same command but change `--epochs` and `--name`:
+
+#### Windows PowerShell
 
 ```powershell
 python dg_train.py `
@@ -97,7 +94,7 @@ python dg_train.py `
   --name nuvoton_people_v1_relu6_192_e200
 ```
 
-Linux:
+#### Linux / WSL / macOS
 
 ```bash
 python dg_train.py \
@@ -133,7 +130,7 @@ NUVOTON_DEVICE=0 bash scripts/train_nuvoton_yolo.sh yolov8n.pt 200 192 nuvoton_p
 
 The baseline path trains a grayscale Faster R-CNN MobileNetV3 model adapted for 1-channel 192x192 inputs.
 
-Windows PowerShell:
+### Windows PowerShell
 
 ```powershell
 python scripts\build_splits.py --dataset-root overhead-person-detection
@@ -147,7 +144,7 @@ python scripts\train_baseline.py `
   --device auto
 ```
 
-Linux:
+### Linux / WSL / macOS
 
 ```bash
 python scripts/build_splits.py --dataset-root overhead-person-detection
@@ -170,13 +167,15 @@ Expected outputs:
 
 ## Label Preview Utility
 
-Windows PowerShell:
+Optional visual sanity check for the overhead dataset:
+
+### Windows PowerShell
 
 ```powershell
 python scripts\export_label_previews.py --dataset-root overhead-person-detection --split val --num-samples 25
 ```
 
-Linux:
+### Linux / WSL / macOS
 
 ```bash
 python scripts/export_label_previews.py --dataset-root overhead-person-detection --split val --num-samples 25

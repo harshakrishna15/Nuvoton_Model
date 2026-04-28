@@ -4,7 +4,6 @@ This guide brings a new machine from a clean clone to a ready-to-train environme
 
 ## Requirements
 
-- Windows PowerShell or Linux shell
 - Python 3.12
 - NVIDIA GPU and a working NVIDIA driver for GPU training
 - At least 12 GB GPU VRAM for the default YOLO smoke-test batch size, or reduce `--batch` if memory is lower
@@ -22,14 +21,19 @@ cd Nuvoton_Model
 
 Linux:
 
+```powershell
+cd "C:\Users\Harsha Krishnaswamy\Desktop\Development\Nuvoton_Model"
+```
+
+Or on Linux / WSL / macOS:
+
 ```bash
-git clone <repo-url> Nuvoton_Model
-cd Nuvoton_Model
+cd /path/to/Nuvoton_Model
 ```
 
 ## Create The Python Environment
 
-Windows PowerShell:
+### Windows PowerShell
 
 ```powershell
 python -m venv .venv
@@ -38,10 +42,10 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-Linux:
+### Linux / WSL / macOS
 
 ```bash
-python3.12 -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
@@ -51,7 +55,14 @@ python -m pip install -r requirements.txt
 
 ## Verify CUDA
 
-Windows PowerShell or Linux:
+### Windows PowerShell
+
+```powershell
+nvidia-smi
+python -c "import torch; print(torch.__version__); print('cuda:', torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'no gpu')"
+```
+
+### Linux / WSL / macOS
 
 ```bash
 nvidia-smi
