@@ -1,25 +1,13 @@
 # Nuvoton Model
 
-This repository contains experiments and tooling for person detection and count estimation from overhead elevator-style imagery, with two main tracks:
+This repository contains experiments and tooling for person detection and count estimation from overhead elevator-style imagery. It has two training paths:
 
 - a PyTorch baseline built around a grayscale Faster R-CNN model
-- a Nuvoton-focused YOLOv8 workflow using a local Ultralytics fork and 192x192-compatible configs
+- a Nuvoton-focused YOLOv8 workflow using the local `ML_YOLO/yolov8_ultralytics` fork and 192x192-compatible configs
 
-The repo also includes local dataset snapshots, conversion scripts, and evaluation utilities for count-focused diagnostics.
+The datasets and generated training outputs are intentionally not committed to Git. A fresh checkout needs the dataset downloads described below before training can run.
 
-## What is in this repo
-
-The project combines two person-detection datasets:
-
-- `overhead-person-detection/`: a parquet-backed Hugging Face-style snapshot of overhead images with bounding boxes
-- `Passenger Counter.yolov8/`: a Roboflow YOLO export with 3,508 images
-
-Those datasets are used in two ways:
-
-- baseline experiments train directly from the parquet dataset through the Python package in `src/elevator_counter/`
-- Nuvoton experiments export a merged one-class YOLO dataset, then train a custom YOLOv8 variant from `ML_YOLO/yolov8_ultralytics`
-
-## Repository Layout
+## What Is In This Repo
 
 - `src/elevator_counter/`: reusable dataset, model, training, and evaluation helpers
 - `scripts/build_splits.py`: creates deterministic train/val/test splits for the overhead dataset
@@ -28,162 +16,201 @@ Those datasets are used in two ways:
 - `scripts/train_baseline.py`: trains the grayscale Faster R-CNN baseline
 - `scripts/evaluate_baseline.py`: tunes a detection threshold on validation and reports test count metrics
 - `scripts/prepare_nuvoton_yolo_dataset.py`: merges datasets into a single-class YOLO dataset for Nuvoton training
-- `scripts/train_nuvoton_yolo.sh`: launches YOLO training through the local Ultralytics fork
+- `scripts/train_nuvoton_yolo.sh`: optional Bash wrapper for YOLO training
 - `scripts/evaluate_nuvoton_yolo.py`: produces count metrics, plots, CSVs, and worst-case overlays for a YOLO checkpoint
 - `ML_YOLO/`: local copy of the Nuvoton/OpenNuvoton model code, including the editable `yolov8_ultralytics` package
-- `datasets/`: extra local dataset storage
 
-## Environment Setup
+## Fresh Setup
 
-This repo expects Python plus the dependencies in `requirements.txt`. The editable install points at the local Ultralytics fork.
+These steps assume Windows PowerShell, Python 3.12, an NVIDIA GPU with a working driver, and enough disk space for the datasets, generated YOLO export, checkpoints, and caches.
+
+### 1. Clone And Enter The Repo
+
+```powershell
+git clone <repo-url> Nuvoton_Model
+cd Nuvoton_Model
+```
+
+If you already have the repo, start from the repo root:
+
+```powershell
+cd "C:\Users\Harsha Krishnaswamy\Desktop\Development\Nuvoton_Model"
+```
+
+### 2. Create The Python Environment
 
 ```powershell
 python -m venv .venv
-.venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-Important notes:
+`requirements.txt` installs CUDA-enabled PyTorch wheels from the official PyTorch index and installs the local Ultralytics fork from `ML_YOLO/yolov8_ultralytics` in editable mode.
 
-- `requirements.txt` installs CUDA-enabled PyTorch wheels from the official PyTorch index
-- `-e ./ML_YOLO/yolov8_ultralytics` means the local Ultralytics fork is part of the environment
-- the scripts default to local repo paths, so they work best when run from the repository root
+Verify the GPU is visible to PyTorch:
 
-## Data Overview
+```powershell
+nvidia-smi
+python -c "import torch; print(torch.__version__); print('cuda:', torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'no gpu')"
+```
 
-### 1. Overhead Person Detection
+For GPU training, this should print `cuda: True` and the NVIDIA GPU name.
 
-- source dataset: [bdanko/overhead-person-detection](https://huggingface.co/datasets/bdanko/overhead-person-detection)
-- local location after download: `overhead-person-detection/`
-- local format: parquet files under `overhead-person-detection/data/`
-- current manifest: `overhead-person-detection/splits.json`
-- size in the included dataset card: 13,448 examples
+### 3. Download The Training Datasets
 
-The loader in `src/elevator_counter/data.py` reads the downloaded Hugging Face dataset snapshot through Hugging Face Datasets, converts images to grayscale tensors, and builds detection targets for PyTorch.
+This project trains on two datasets:
 
-### 2. Passenger Counter
+1. [bdanko/overhead-person-detection](https://huggingface.co/datasets/bdanko/overhead-person-detection)
+2. [Passenger Counter](https://universe.roboflow.com/passenger-counter-project/passenger-counter)
 
-- source dataset: [Passenger Counter](https://universe.roboflow.com/passenger-counter-project/passenger-counter)
-- local location after export: `Passenger Counter.yolov8/`
-- local format: YOLO labels and images from Roboflow
-- included export note: 3,508 images
+Place them in the repo root with exactly these local folder names:
 
-During Nuvoton data prep, these labels are normalized to a single `person` class and merged with the overhead dataset.
+```text
+Nuvoton_Model/
+  overhead-person-detection/
+    data/
+      train-00000-of-00001.parquet
+    README.md
+    splits.json                  # optional; regenerated if missing
+
+  Passenger Counter.yolov8/
+    train/
+      images/
+      labels/
+    data.yaml
+    README.roboflow.txt
+```
+
+The datasets are ignored by Git. Do not commit `overhead-person-detection/`, `Passenger Counter.yolov8/`, `prepared_datasets/`, `runs/`, or model weights.
+
+Quick local validation:
+
+```powershell
+Test-Path .\overhead-person-detection\data
+Test-Path '.\Passenger Counter.yolov8\train\images'
+Test-Path '.\Passenger Counter.yolov8\train\labels'
+Get-ChildItem .\overhead-person-detection\data -Filter *.parquet
+Get-ChildItem '.\Passenger Counter.yolov8\train\images' -File | Measure-Object
+Get-ChildItem '.\Passenger Counter.yolov8\train\labels' -File | Measure-Object
+```
+
+The Passenger Counter export used here has 3,508 images and 3,508 label files.
+
+### 4. Build Splits And Prepare The YOLO Dataset
+
+```powershell
+python scripts\build_splits.py --dataset-root overhead-person-detection
+python scripts\prepare_nuvoton_yolo_dataset.py --force
+```
+
+This creates the merged one-class YOLO dataset at:
+
+```text
+prepared_datasets/nuvoton_people_v1/
+  dataset.yaml
+  prep_summary.json
+  train/
+  val/
+  test/
+```
+
+Key behavior:
+
+- the overhead dataset becomes train/val/test using the deterministic split manifest
+- Passenger Counter contributes to train/val only
+- all labels are normalized to a single class: `person`
+- overhead images are exported as grayscale PNGs
+
+### 5. Run A 1-Epoch GPU Smoke Test
+
+Run this from the repo root in PowerShell:
+
+```powershell
+$repo = (Get-Location).Path
+$env:MPLCONFIGDIR = "$repo\.matplotlib"
+$env:YOLO_CONFIG_DIR = "$repo\.ultralytics"
+$env:TEMP = "$env:LOCALAPPDATA\Temp\nuvoton_model"
+$env:TMP = "$env:LOCALAPPDATA\Temp\nuvoton_model"
+$env:TMPDIR = "$env:LOCALAPPDATA\Temp\nuvoton_model"
+New-Item -ItemType Directory -Force $env:TEMP | Out-Null
+
+cd .\ML_YOLO\yolov8_ultralytics
+
+python dg_train.py `
+  --model-cfg ultralytics/cfg/models/v8/relu6-yolov8.yaml `
+  --data "$repo\prepared_datasets\nuvoton_people_v1\dataset.yaml" `
+  --imgsz 192 `
+  --weights yolov8n.pt `
+  --epochs 1 `
+  --patience 30 `
+  --device 0 `
+  --workers 0 `
+  --save-period 1 `
+  --project "$repo\runs\nuvoton_yolo" `
+  --name smoke_1epoch_gpu
+```
+
+Important training notes:
+
+- use an absolute `--data` path so Ultralytics does not resolve relative dataset paths against a global `datasets_dir`
+- `--device 0` uses the first NVIDIA GPU; use `--device cpu` only for CPU testing
+- the default batch size is `64`; add `--batch 16` or `--batch 8` if CUDA runs out of memory
+- for a full run, increase `--epochs` and change `--name`
+
+Expected smoke-test outputs:
+
+```text
+runs/nuvoton_yolo/smoke_1epoch_gpu/
+  weights/
+    last.pt
+    best.pt
+```
+
+A Bash-compatible wrapper is also available if you are using Git Bash or WSL:
+
+```bash
+NUVOTON_DEVICE=0 bash scripts/train_nuvoton_yolo.sh yolov8n.pt 200 192 nuvoton_people_v1_relu6_192_e200
+```
 
 ## Baseline Workflow
 
 The baseline path uses a grayscale Faster R-CNN MobileNetV3 model adapted for 1-channel 192x192 inputs.
 
-### 1. Build or refresh the split manifest
-
 ```powershell
-python scripts/build_splits.py --dataset-root overhead-person-detection
-```
-
-This creates `overhead-person-detection/splits.json` if it does not already exist.
-
-### 2. Inspect the dataset
-
-```powershell
-python scripts/inspect_dataset.py --dataset-root overhead-person-detection --split train
-```
-
-Optional label previews:
-
-```powershell
-python scripts/export_label_previews.py --dataset-root overhead-person-detection --split val --num-samples 25
-```
-
-### 3. Train the baseline model
-
-```powershell
-python scripts/train_baseline.py `
+python scripts\build_splits.py --dataset-root overhead-person-detection
+python scripts\inspect_dataset.py --dataset-root overhead-person-detection --split train
+python scripts\train_baseline.py `
   --dataset-root overhead-person-detection `
-  --output-dir runs/baseline_frcnn `
+  --output-dir runs\baseline_frcnn `
   --epochs 10 `
   --batch-size 4 `
   --image-size 192 `
   --device auto
 ```
 
-Expected outputs include:
+Expected baseline outputs:
 
 - `runs/baseline_frcnn/run_config.json`
 - `runs/baseline_frcnn/metrics.jsonl`
 - `runs/baseline_frcnn/last.pt`
 - `runs/baseline_frcnn/best.pt`
 
-### 4. Evaluate the baseline checkpoint
+Evaluate the baseline checkpoint:
 
 ```powershell
-python scripts/evaluate_baseline.py `
+python scripts\evaluate_baseline.py `
   --dataset-root overhead-person-detection `
-  --checkpoint runs/baseline_frcnn/best.pt `
-  --output runs/baseline_frcnn/eval_summary.json
+  --checkpoint runs\baseline_frcnn\best.pt `
+  --output runs\baseline_frcnn\eval_summary.json
 ```
 
-This script:
-
-- sweeps score thresholds on the validation split
-- selects the best threshold by count MAE, bias, and exact-match rate
-- reports overall and bucketed test-set counting metrics
-
-## Nuvoton YOLO Workflow
-
-The Nuvoton path exports a merged one-class YOLO dataset and trains with the local Ultralytics fork using `relu6-yolov8.yaml` and `imgsz=192`.
-
-### 1. Prepare the merged YOLO dataset
+## YOLO Evaluation
 
 ```powershell
-python scripts/prepare_nuvoton_yolo_dataset.py --force
-```
-
-By default this creates:
-
-- `prepared_datasets/nuvoton_people_v1/dataset.yaml`
-- `prepared_datasets/nuvoton_people_v1/prep_summary.json`
-- `prepared_datasets/nuvoton_people_v1/train/`
-- `prepared_datasets/nuvoton_people_v1/val/`
-- `prepared_datasets/nuvoton_people_v1/test/`
-
-Key behavior:
-
-- overhead dataset becomes train/val/test using the deterministic split manifest
-- Passenger Counter contributes to train/val only
-- all labels are normalized to a single class: `person`
-- overhead images are exported as grayscale PNGs
-
-### 2. Train the Nuvoton YOLO model
-
-On Windows, run the shell script from Git Bash, WSL, or adapt the same command for PowerShell:
-
-```bash
-bash scripts/train_nuvoton_yolo.sh yolov8n.pt 200 192 nuvoton_people_v1_relu6_192_e200
-```
-
-The script uses:
-
-- dataset YAML: `prepared_datasets/nuvoton_people_v1/dataset.yaml`
-- model config: `ultralytics/cfg/models/v8/relu6-yolov8.yaml`
-- project dir: `runs/nuvoton_yolo`
-- default device: `cpu` unless overridden with `NUVOTON_DEVICE`
-
-Useful environment overrides:
-
-- `NUVOTON_YOLO_REPO`
-- `NUVOTON_RUNS_DIR`
-- `NUVOTON_DEVICE`
-- `NUVOTON_WORKERS`
-- `NUVOTON_PATIENCE`
-- `PYTHON_BIN`
-
-### 3. Evaluate a YOLO checkpoint
-
-```powershell
-python scripts/evaluate_nuvoton_yolo.py `
-  --weights runs/nuvoton_yolo/<run-name>/weights/best.pt `
-  --data prepared_datasets/nuvoton_people_v1/dataset.yaml `
+python scripts\evaluate_nuvoton_yolo.py `
+  --weights runs\nuvoton_yolo\<run-name>\weights\best.pt `
+  --data prepared_datasets\nuvoton_people_v1\dataset.yaml `
   --split val `
   --imgsz 192 `
   --conf 0.25
@@ -212,28 +239,8 @@ This repo is optimized around counting quality, not only box-level detection qua
 
 ## Development Notes
 
+- generated artifacts such as `.venv/`, `.hf-cache/`, `.ultralytics/`, `runs/`, `prepared_datasets/`, and preview images should not be committed
+- model weights such as `*.pt`, `*.weights`, `*.onnx`, `*.engine`, and `*.tflite` should not be committed
 - the baseline dataset loader converts images to grayscale and filters malformed boxes
 - the baseline model adapts the first convolution of MobileNetV3 to one input channel
-- the Nuvoton dataset YAML intentionally omits a `path:` field so the local Ultralytics fork resolves paths relative to the YAML file location
-- generated artifacts such as `runs/`, `prepared_datasets/`, and preview images may not be checked in
-
-## Quick Start
-
-If you just want the shortest path to a working experiment:
-
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-python scripts/build_splits.py
-python scripts/train_baseline.py --epochs 10 --output-dir runs/baseline_frcnn
-python scripts/evaluate_baseline.py --checkpoint runs/baseline_frcnn/best.pt
-```
-
-For the Nuvoton path:
-
-```powershell
-python scripts/prepare_nuvoton_yolo_dataset.py --force
-```
-
-Then train with `scripts/train_nuvoton_yolo.sh` from a Bash-compatible shell.
+- for Nuvoton training, pass an absolute `--data` path to avoid Ultralytics resolving relative dataset paths against a global `datasets_dir` setting
