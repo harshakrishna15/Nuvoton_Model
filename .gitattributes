@@ -1,0 +1,23 @@
+# Keep source-controlled text files stable across Windows, macOS, and Linux.
+* text=auto eol=lf
+
+# Windows command scripts are friendlier with CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets should never be line-ending normalized.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.7z binary
+*.pt binary
+*.pth binary
+*.weights binary
+*.tflite binary
+*.onnx binary
+*.engine binary

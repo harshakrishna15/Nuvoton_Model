@@ -1,0 +1,72 @@
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Local caches and temp files
+.hf-cache/
+.matplotlib/
+.tmp/
+.ultralytics/
+*.tmp
+*.log
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Model artifacts and checkpoints
+*.pt
+*.pth
+*.ckpt
+*.weights
+*.onnx
+*.engine
+*.tflite
+*.npy
+
+# Native binaries and generated build outputs
+*.exe
+*.dll
+*.lib
+*.obj
+*.pdb
+*_vela.tflite.cc
+ML_YOLO/**/vela/generated/
+
+# Archives
+*.zip
+*.tar
+*.gz
+*.7z
+
+# Local datasets and generated dataset derivatives
+datasets/
+overhead-person-detection/
+Passenger Counter.yolov8/
+prepared_datasets/
+preview_labels/
+
+# Training / experiment outputs
+runs/
+ML_YOLO/runs/
+
+# Editor / IDE
+.vscode/
+.idea/

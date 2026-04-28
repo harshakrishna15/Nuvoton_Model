@@ -1,0 +1,26 @@
+# Core runtime dependencies for the Nuvoton Project.
+# Recreate the local Ultralytics fork with:
+#   python -m pip install -r requirements.txt
+#
+# CUDA-enabled PyTorch wheels are pulled from the official PyTorch index below.
+
+--extra-index-url https://download.pytorch.org/whl/cu128
+
+numpy==1.26.4
+Pillow==12.2.0
+tqdm==4.67.3
+datasets==4.8.4
+pyarrow==24.0.0
+PyYAML==6.0.3
+requests==2.33.1
+scipy==1.17.1
+pandas==3.0.2
+matplotlib==3.10.8
+seaborn==0.13.2
+opencv-python==4.10.0.84
+psutil==7.2.2
+py-cpuinfo==9.0.0
+ultralytics-thop==2.0.18
+torch==2.7.0+cu128
+torchvision==0.22.0+cu128
+-e ./ML_YOLO/yolov8_ultralytics
