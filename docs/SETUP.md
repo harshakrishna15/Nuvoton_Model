@@ -4,8 +4,9 @@ This guide brings a new machine from a clean clone to a ready-to-train environme
 
 ## Requirements
 
+- Windows PowerShell or Linux shell
 - Python 3.12
-- NVIDIA GPU and a working NVIDIA driver for GPU training
+- NVIDIA GPU and working NVIDIA driver for GPU training
 - At least 12 GB GPU VRAM for the default YOLO smoke-test batch size, or reduce `--batch` if memory is lower
 - At least 15 GB free disk space for datasets, prepared exports, checkpoints, and caches
 - Internet access for Python dependencies and the first `yolov8n.pt` download
@@ -21,19 +22,14 @@ cd Nuvoton_Model
 
 Linux:
 
-```powershell
-cd "C:\Users\Harsha Krishnaswamy\Desktop\Development\Nuvoton_Model"
-```
-
-Or on Linux / WSL / macOS:
-
 ```bash
-cd /path/to/Nuvoton_Model
+git clone <repo-url> Nuvoton_Model
+cd Nuvoton_Model
 ```
 
 ## Create The Python Environment
 
-### Windows PowerShell
+Windows PowerShell:
 
 ```powershell
 python -m venv .venv
@@ -42,27 +38,20 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-### Linux / WSL / macOS
+Linux:
 
 ```bash
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-`requirements.txt` installs CUDA-enabled PyTorch wheels from the official PyTorch index and installs the local Ultralytics fork from `ML_YOLO/yolov8_ultralytics` in editable mode.
+`requirements.txt` installs CUDA-enabled PyTorch wheels and installs the local Ultralytics fork from `ML_YOLO/yolov8_ultralytics` in editable mode.
 
 ## Verify CUDA
 
-### Windows PowerShell
-
-```powershell
-nvidia-smi
-python -c "import torch; print(torch.__version__); print('cuda:', torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'no gpu')"
-```
-
-### Linux / WSL / macOS
+Windows PowerShell or Linux:
 
 ```bash
 nvidia-smi
@@ -71,8 +60,4 @@ python -c "import torch; print(torch.__version__); print('cuda:', torch.cuda.is_
 
 For GPU training, the Python check should print `cuda: True` and the NVIDIA GPU name.
 
-If CUDA is not available, see [Troubleshooting](TROUBLESHOOTING.md).
-
-## Next Step
-
-Continue with [Dataset Setup](DATASETS.md).
+Next: [Dataset Setup](DATASETS.md).

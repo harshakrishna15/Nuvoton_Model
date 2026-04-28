@@ -34,13 +34,15 @@ Start here:
 
 ## Quick Start
 
-### Windows PowerShell
+Windows PowerShell:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
+python scripts\build_splits.py --dataset-root overhead-person-detection
+python scripts\prepare_nuvoton_yolo_dataset.py --force
 ```
 
 Linux:
@@ -50,31 +52,10 @@ python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-```
-
-Download the two datasets listed in [Dataset Setup](docs/DATASETS.md), place them in the expected local folders, then run:
-
-Windows PowerShell:
-
-```powershell
-python scripts\build_splits.py --dataset-root overhead-person-detection
-python scripts\prepare_nuvoton_yolo_dataset.py --force
-```
-
-### Linux / WSL / macOS
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
-
-Download the two datasets listed in [Dataset Setup](docs/DATASETS.md), place them in the expected local folders, then run:
-
-```bash
 python scripts/build_splits.py --dataset-root overhead-person-detection
 python scripts/prepare_nuvoton_yolo_dataset.py --force
 ```
+
+Download the two datasets listed in [Dataset Setup](docs/DATASETS.md) before running the split and preparation commands.
 
 Run the 1-epoch GPU smoke test from [Training](docs/TRAINING.md) to verify the full pipeline.

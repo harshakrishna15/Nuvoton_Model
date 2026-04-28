@@ -106,10 +106,10 @@ Custom 192x192 ReLU6-activated YOLOv8-nano for overhead person detection targeti
 repo="$(pwd)"
 export MPLCONFIGDIR="$repo/.matplotlib"
 export YOLO_CONFIG_DIR="$repo/.ultralytics"
-export TEMP=/tmp/nuvoton_model
-export TMP=/tmp/nuvoton_model
-export TMPDIR=/tmp/nuvoton_model
-mkdir -p /tmp/nuvoton_model
+export TEMP="$repo/.tmp"
+export TMP="$repo/.tmp"
+export TMPDIR="$repo/.tmp"
+mkdir -p "$repo/.tmp"
 
 cd ML_YOLO/yolov8_ultralytics
 
@@ -133,10 +133,10 @@ python dg_train.py \
 repo="$(pwd)"
 export MPLCONFIGDIR="$repo/.matplotlib"
 export YOLO_CONFIG_DIR="$repo/.ultralytics"
-export TEMP=/tmp/nuvoton_model
-export TMP=/tmp/nuvoton_model
-export TMPDIR=/tmp/nuvoton_model
-mkdir -p /tmp/nuvoton_model
+export TEMP="$repo/.tmp"
+export TMP="$repo/.tmp"
+export TMPDIR="$repo/.tmp"
+mkdir -p "$repo/.tmp"
 
 cd ML_YOLO/yolov8_ultralytics
 
