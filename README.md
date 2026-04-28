@@ -34,7 +34,7 @@ Start here:
 
 ## Quick Start
 
-From a fresh checkout on Windows PowerShell:
+### Windows PowerShell
 
 ```powershell
 python -m venv .venv
@@ -50,14 +50,20 @@ python scripts\build_splits.py --dataset-root overhead-person-detection
 python scripts\prepare_nuvoton_yolo_dataset.py --force
 ```
 
+### Linux / WSL / macOS
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Download the two datasets listed in [Dataset Setup](docs/DATASETS.md), place them in the expected local folders, then run:
+
+```bash
+python scripts/build_splits.py --dataset-root overhead-person-detection
+python scripts/prepare_nuvoton_yolo_dataset.py --force
+```
+
 Run the 1-epoch GPU smoke test from [Training](docs/TRAINING.md) to verify the full pipeline.
-
-## What Not To Commit
-
-The following are local artifacts and should remain untracked:
-
-- `.venv/`, `.hf-cache/`, `.matplotlib/`, `.tmp/`, `.ultralytics/`
-- `overhead-person-detection/`, `Passenger Counter.yolov8/`, `prepared_datasets/`
-- `runs/`, model weights, exported models, and generated caches
-
-These paths are covered by `.gitignore`.

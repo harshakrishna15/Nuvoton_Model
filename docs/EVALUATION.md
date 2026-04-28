@@ -4,6 +4,8 @@ This repo evaluates models with count-focused metrics, not only box-level detect
 
 ## Baseline Evaluation
 
+### Windows PowerShell
+
 ```powershell
 python scripts\evaluate_baseline.py `
   --dataset-root overhead-person-detection `
@@ -11,9 +13,20 @@ python scripts\evaluate_baseline.py `
   --output runs\baseline_frcnn\eval_summary.json
 ```
 
+### Linux / WSL / macOS
+
+```bash
+python scripts/evaluate_baseline.py \
+  --dataset-root overhead-person-detection \
+  --checkpoint runs/baseline_frcnn/best.pt \
+  --output runs/baseline_frcnn/eval_summary.json
+```
+
 The baseline evaluator sweeps score thresholds on validation, chooses a count-focused threshold, and reports test-set count quality.
 
 ## Nuvoton YOLO Evaluation
+
+### Windows PowerShell
 
 ```powershell
 python scripts\evaluate_nuvoton_yolo.py `
@@ -22,6 +35,18 @@ python scripts\evaluate_nuvoton_yolo.py `
   --split val `
   --imgsz 192 `
   --conf 0.25 `
+  --device 0
+```
+
+### Linux / WSL / macOS
+
+```bash
+python scripts/evaluate_nuvoton_yolo.py \
+  --weights runs/nuvoton_yolo/<run-name>/weights/best.pt \
+  --data prepared_datasets/nuvoton_people_v1/dataset.yaml \
+  --split val \
+  --imgsz 192 \
+  --conf 0.25 \
   --device 0
 ```
 
