@@ -79,7 +79,7 @@ Custom 192x192 ReLU6-activated YOLOv8-nano for overhead person detection targeti
 
 | Metric | Value |
 |--------|-------|
-| mAP@0.5:0.95 | TBD |
+| mAP@0.5:0.95 | 21 |
 | mAP@0.5 | TBD |
 | Precision | TBD |
 | Recall | TBD |
