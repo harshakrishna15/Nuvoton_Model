@@ -67,6 +67,7 @@ preview_labels/
 runs/
 ML_YOLO/runs/
 BEST_EmKnight_run/
+docs/BestTraining.md
 
 # Editor / IDE
 .vscode/
