@@ -60,6 +60,7 @@ ML_YOLO/**/vela/generated/
 datasets/
 overhead-person-detection/
 Passenger Counter.yolov8/
+*.coco/
 prepared_datasets/
 preview_labels/
 

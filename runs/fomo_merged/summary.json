@@ -1,0 +1,12 @@
+{
+  "best_val_count_mae": 0.6514032496307238,
+  "checkpoint": "/home/Shrivaikunth/Downloads/Nuvoton_Model/runs/fomo_merged/best.pt",
+  "test_metrics": {
+    "loss": 1.0960908900532458,
+    "images": 1439,
+    "count_mae": 0.45587213342599026,
+    "count_rmse": 1.1747872517464084,
+    "count_bias": -0.3655316191799861,
+    "empty_false_positive_rate": 0.1276595744680851
+  }
+}

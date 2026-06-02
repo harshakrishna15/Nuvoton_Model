@@ -48,6 +48,16 @@ def parse_args() -> argparse.Namespace:
         help="Path to the Roboflow YOLO export for Passenger Counter.",
     )
     parser.add_argument(
+        "--coco-root",
+        action="append",
+        type=Path,
+        default=None,
+        help=(
+            "Path to a Roboflow COCO export (with train/valid/test subdirectories "
+            "each containing _annotations.coco.json). Repeatable."
+        ),
+    )
+    parser.add_argument(
         "--output-root",
         type=Path,
         default=Path("prepared_datasets/nuvoton_people_v1"),
@@ -237,6 +247,89 @@ def export_passenger_counter_dataset(
     return counts
 
 
+COCO_SPLIT_MAP = {"train": "train", "valid": "val", "val": "val", "test": "test"}
+
+
+def export_coco_dataset(
+    coco_root: Path,
+    output_root: Path,
+    *,
+    person_category_names: tuple[str, ...] = ("person",),
+) -> dict[str, int]:
+    """Ingest a Roboflow COCO export (train/valid/test subdirs) into the merged YOLO dataset.
+
+    Class is collapsed to ``person`` (id 0). Any category whose name contains
+    one of ``person_category_names`` (case-insensitive) is treated as a person.
+    If no such category exists, every annotation is kept (single-class dataset).
+    """
+
+    if not coco_root.exists():
+        raise FileNotFoundError(f"COCO root not found: {coco_root}")
+
+    counts = {"images": 0, "labels": 0, "skipped_boxes": 0, "missing_images": 0}
+    source_tag = coco_root.name.replace(" ", "_").replace(".", "_")
+
+    for split_name in ("train", "valid", "val", "test"):
+        split_dir = coco_root / split_name
+        ann_path = split_dir / "_annotations.coco.json"
+        if not ann_path.exists():
+            continue
+        out_split = COCO_SPLIT_MAP[split_name]
+
+        with ann_path.open("r", encoding="utf-8") as fh:
+            coco = json.load(fh)
+
+        categories = {int(c["id"]): str(c.get("name", "")) for c in coco.get("categories", [])}
+        person_ids: set[int] = set()
+        for cid, cname in categories.items():
+            if any(token in cname.lower() for token in person_category_names):
+                person_ids.add(cid)
+        # Fall back to "keep everything" when no explicit person category exists.
+        if not person_ids:
+            person_ids = set(categories.keys())
+
+        anns_by_image: dict[int, list[dict]] = {}
+        for ann in coco.get("annotations", []):
+            if int(ann.get("category_id", -1)) not in person_ids:
+                continue
+            anns_by_image.setdefault(int(ann["image_id"]), []).append(ann)
+
+        for image_info in coco.get("images", []):
+            image_id = int(image_info["id"])
+            file_name = image_info["file_name"]
+            width = int(image_info["width"])
+            height = int(image_info["height"])
+
+            src_image_path = split_dir / file_name
+            if not src_image_path.exists():
+                counts["missing_images"] += 1
+                continue
+
+            stem = f"{source_tag}_{out_split}_{image_id:06d}"
+            ext = Path(file_name).suffix.lower() or ".jpg"
+            dst_image_path = output_root / out_split / "images" / f"{stem}{ext}"
+            dst_label_path = output_root / out_split / "labels" / f"{stem}.txt"
+            shutil.copy2(src_image_path, dst_image_path)
+
+            label_lines: list[str] = []
+            for ann in anns_by_image.get(image_id, []):
+                bbox = ann.get("bbox")
+                if not bbox or len(bbox) != 4:
+                    counts["skipped_boxes"] += 1
+                    continue
+                line = xywh_to_yolo_line(list(bbox), width, height)
+                if line is None:
+                    counts["skipped_boxes"] += 1
+                    continue
+                label_lines.append(line)
+
+            write_label_file(dst_label_path, label_lines)
+            counts["images"] += 1
+            counts["labels"] += len(label_lines)
+
+    return counts
+
+
 def write_dataset_yaml(output_root: Path) -> Path:
     dataset_yaml = output_root / "dataset.yaml"
     dataset_yaml.write_text(
@@ -267,6 +360,7 @@ def write_metadata(
     *,
     overhead_stats: dict[str, int],
     passenger_stats: dict[str, int],
+    coco_stats: dict[str, dict[str, int]],
     passenger_val_fraction: float,
     seed: int,
 ) -> Path:
@@ -296,6 +390,7 @@ def write_metadata(
         "stats": {
             "overhead_export": overhead_stats,
             "passenger_export": passenger_stats,
+            "coco_exports": coco_stats,
             "final_split_counts": split_counts,
         },
         "recommended_training": {
@@ -310,26 +405,51 @@ def write_metadata(
     return metadata_path
 
 
+def _default_coco_roots() -> list[Path]:
+    """Auto-discover SJSU-style COCO datasets in the workspace root."""
+
+    candidates = sorted(ROOT.glob("*.coco"))
+    return [p for p in candidates if p.is_dir()]
+
+
 def main() -> None:
     args = parse_args()
     ensure_clean_output_root(args.output_root, force=args.force)
 
-    overhead_stats = export_overhead_dataset(
-        args.overhead_root,
-        args.overhead_manifest,
-        args.output_root,
-    )
-    passenger_stats = export_passenger_counter_dataset(
-        args.passenger_root,
-        args.output_root,
-        val_fraction=args.passenger_val_fraction,
-        seed=args.seed,
-    )
+    overhead_stats: dict = {}
+    passenger_stats: dict = {}
+    if args.overhead_root.exists():
+        overhead_stats = export_overhead_dataset(
+            args.overhead_root,
+            args.overhead_manifest,
+            args.output_root,
+        )
+    else:
+        print(f"[prepare] Skipping overhead dataset (missing: {args.overhead_root})")
+
+    if args.passenger_root.exists():
+        passenger_stats = export_passenger_counter_dataset(
+            args.passenger_root,
+            args.output_root,
+            val_fraction=args.passenger_val_fraction,
+            seed=args.seed,
+        )
+    else:
+        print(f"[prepare] Skipping passenger dataset (missing: {args.passenger_root})")
+
+    coco_roots: list[Path] = list(args.coco_root) if args.coco_root else _default_coco_roots()
+    coco_stats: dict[str, dict[str, int]] = {}
+    for coco_root in coco_roots:
+        resolved = coco_root.resolve() if coco_root.is_absolute() else (ROOT / coco_root).resolve()
+        print(f"[prepare] Ingesting COCO dataset: {resolved}")
+        coco_stats[str(resolved)] = export_coco_dataset(resolved, args.output_root)
+
     dataset_yaml = write_dataset_yaml(args.output_root)
     metadata_path = write_metadata(
         args.output_root,
         overhead_stats=overhead_stats,
         passenger_stats=passenger_stats,
+        coco_stats=coco_stats,
         passenger_val_fraction=args.passenger_val_fraction,
         seed=args.seed,
     )
@@ -341,6 +461,7 @@ def main() -> None:
             "metadata": str(metadata_path.resolve()),
             "overhead_export": overhead_stats,
             "passenger_export": passenger_stats,
+            "coco_exports": coco_stats,
         },
         indent=2,
     ))

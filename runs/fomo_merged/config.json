@@ -1,0 +1,22 @@
+{
+  "dataset_root": "/home/Shrivaikunth/Downloads/Nuvoton_Model/prepared_datasets/nuvoton_people_v1",
+  "output_dir": "/home/Shrivaikunth/Downloads/Nuvoton_Model/runs/fomo_merged",
+  "epochs": 60,
+  "batch_size": 32,
+  "num_workers": 0,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "image_size": 192,
+  "grid_size": 6,
+  "threshold": 0.5,
+  "pos_weight": 20.0,
+  "focal": false,
+  "count_aux_weight": 0.1,
+  "brightness_jitter": 0.2,
+  "contrast_jitter": 0.2,
+  "no_pretrained": false,
+  "device": "auto",
+  "seed": 42,
+  "max_train_batches": null,
+  "max_val_batches": null
+}
